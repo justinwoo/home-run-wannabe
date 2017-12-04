@@ -40,32 +40,31 @@ class ValidateRule rule a where
 type ValidatedValue rules value = Const value (Proxy rules)
 
 -- Check the validations defined
-class CheckRules (rulesL :: [(Symbol, *)]) rules a where
-  checkRulesImpl :: Proxy rulesL -> Proxy rules -> a -> Validation [String] ()
+class CheckRules (rulesL :: [(Symbol, *)]) a where
+  checkRulesImpl :: Proxy rulesL -> a -> Validation [String] ()
 
-instance CheckRules '[] rules a where
-  checkRulesImpl _ _ _ = pure ()
+instance CheckRules '[] a where
+  checkRulesImpl _ _ = pure ()
 
 instance
   ( KnownSymbol name
   , ValidateRule rule a
-  , HasField' name rules rule
-  , CheckRules tail rules a
-  ) => CheckRules ('(name, rule) ': tail) rules a where
-  checkRulesImpl _ rulesP x = (<>) <$> curr <*> rest
+  , CheckRules tail a
+  ) => CheckRules ('(name, rule) ': tail) a where
+  checkRulesImpl _ x = (<>) <$> curr <*> rest
     where
       curr = if validateRuleImpl (Proxy @rule) x
         then pure ()
         else Failure . pure $ symbolVal (Proxy @name)
-      rest = const () <$> checkRulesImpl (Proxy @tail) rulesP x
+      rest = const () <$> checkRulesImpl (Proxy @tail) x
 
 -- exposed function
 checkRules :: forall a rules rulesL
    . Generic rules
   => rulesL ~ GRowToList (Rep rules)
-  => CheckRules rulesL rules a
+  => CheckRules rulesL a
   => Proxy rules
   -> a
   -> Validation [String] (ValidatedValue rules a)
-checkRules rulesP a =
-  const (Const a) <$> checkRulesImpl (Proxy @rulesL) rulesP a
+checkRules _ a =
+  const (Const a) <$> checkRulesImpl (Proxy @rulesL) a
