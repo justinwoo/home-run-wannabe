@@ -49,7 +49,7 @@ instance CheckRules '[] rules a where
 instance
   ( KnownSymbol name
   , ValidateRule rule a
-  , HasField name rule rules
+  , HasField' name rules rule
   , CheckRules tail rules a
   ) => CheckRules ('(name, rule) ': tail) rules a where
   checkRulesImpl _ rulesP x = (<>) <$> curr <*> rest

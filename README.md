@@ -30,7 +30,7 @@ data FileNameValidations = FileNameValidations
 
 -- define a function that only works when validations have been run
 onlyOnGroupBananaSubs :: forall rules
-  . HasField "group" (BeginsWith "[BananaSubs]") rules
+  . HasField' "group" rules (BeginsWith "[BananaSubs]")
  => ValidatedValue rules String
  -> String
 onlyOnGroupBananaSubs (Const s) = "subbed by BananaSubs: " ++ s
