@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Lib where
 
@@ -34,29 +35,29 @@ type family (a :: [k]) ++ (b :: [k]) :: [k] where
 
 -- Validate Rule, where a given rule can also be used to validate any value type
 class ValidateRule rule a where
-  validateRuleImpl :: Proxy rule -> a -> Bool
+  validateRuleImpl :: a -> Bool
 
 -- Validated Structure
 type ValidatedValue rules value = Const value (Proxy rules)
 
 -- Check the validations defined
 class CheckRules (rulesL :: [(Symbol, *)]) a where
-  checkRulesImpl :: Proxy rulesL -> a -> Validation [String] ()
+  checkRulesImpl :: a -> Validation [String] ()
 
 instance CheckRules '[] a where
-  checkRulesImpl _ _ = pure ()
+  checkRulesImpl _ = pure ()
 
 instance
   ( KnownSymbol name
   , ValidateRule rule a
   , CheckRules tail a
   ) => CheckRules ('(name, rule) ': tail) a where
-  checkRulesImpl _ x = (<>) <$> curr <*> rest
+  checkRulesImpl x = (<>) <$> curr <*> rest
     where
-      curr = if validateRuleImpl (Proxy @rule) x
+      curr = if validateRuleImpl @rule x
         then pure ()
-        else Failure . pure $ symbolVal (Proxy @name)
-      rest = const () <$> checkRulesImpl (Proxy @tail) x
+        else Failure . pure $ symbolVal @name Proxy
+      rest = const () <$> checkRulesImpl @tail x
 
 -- exposed function
 checkRules :: forall a rules rulesL
@@ -67,4 +68,4 @@ checkRules :: forall a rules rulesL
   -> a
   -> Validation [String] (ValidatedValue rules a)
 checkRules _ a =
-  const (Const a) <$> checkRulesImpl (Proxy @rulesL) a
+  const (Const a) <$> checkRulesImpl @rulesL a

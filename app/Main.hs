@@ -24,11 +24,11 @@ data Contains (s :: Symbol)
 data EndsWith (s :: Symbol)
 
 instance KnownSymbol prefix => ValidateRule (BeginsWith prefix) String where
-  validateRuleImpl _ input = symbolVal (Proxy @prefix) `isPrefixOf` input
+  validateRuleImpl input = symbolVal @prefix Proxy `isPrefixOf` input
 instance KnownSymbol substring => ValidateRule (Contains substring) String where
-  validateRuleImpl _ input = symbolVal (Proxy @substring) `isInfixOf` input
+  validateRuleImpl input = symbolVal @substring Proxy `isInfixOf` input
 instance KnownSymbol suffix => ValidateRule (EndsWith suffix) String where
-  validateRuleImpl _ input = symbolVal (Proxy @suffix) `isSuffixOf` input
+  validateRuleImpl input = symbolVal @suffix Proxy `isSuffixOf` input
 
 -- define what validations i want performed
 data FileNameValidations = FileNameValidations
